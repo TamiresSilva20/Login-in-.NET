@@ -22,46 +22,64 @@ namespace logintcc
 
         protected void BtnCadastrar_Click(object sender, EventArgs e)
         {
-
-            using (MySqlConnection conn = new MySqlConnection("server=localhost;user=root;database=tcc0124;port=3306;password=Root;"))
+            if (string.IsNullOrEmpty(txtEmail.Text) ||
+          string.IsNullOrEmpty(txtNome.Text) ||
+          string.IsNullOrEmpty(txtTele.Text) ||
+          string.IsNullOrEmpty(txtSenha.Text) ||
+          string.IsNullOrEmpty(txtConfSenha.Text))
             {
-                conn.Open();
+                lblMensagem.Text = "Preencha todos os campos obrigatórios.";
+                return;
+            }
 
-                using (MySqlCommand cmd = new MySqlCommand())
+            // Verifica se a senha e a confirmação de senha coincidem
+            if (txtSenha.Text != txtConfSenha.Text)
+            {
+                lblMensagem.Text = "A senha e a confirmação de senha não coincidem.";
+                return;
+            }
+            else
+            {
+                using (MySqlConnection conn = new MySqlConnection("server=localhost;user=root;database=tcc0124;port=3306;password=Root;"))
                 {
-                    cmd.Connection = conn;
-                    cmd.CommandText = "Select * from Usuario where email = @email  ";
-                    cmd.Parameters.AddWithValue("@email", txtEmail.Text);
+                    conn.Open();
 
-                    using (MySqlDataReader dr = cmd.ExecuteReader())
+                    using (MySqlCommand cmd = new MySqlCommand())
                     {
-                        if (dr.HasRows)
+                        cmd.Connection = conn;
+                        cmd.CommandText = "Select * from Usuario where email = @email  ";
+                        cmd.Parameters.AddWithValue("@email", txtEmail.Text);
+
+                        using (MySqlDataReader dr = cmd.ExecuteReader())
                         {
-                            lblMensagem.Text = "Email já Cadastrado";
-                            dr.Close();
+                            if (dr.HasRows)
+                            {
+                                lblMensagem.Text = "Email já Cadastrado";
+                                dr.Close();
+                            }
+
+                            else
+                            {
+                                dr.Close();
+                                cmd.Parameters.Clear();
+                                cmd.CommandText = "insert into Usuario(email,nome,telefone,idestado,senha,conf_senha,concorda) values (@email, @nome, @telefone, @idestado, @senha,@conf_senha,@concorda)";
+
+                                cmd.Parameters.AddWithValue("@email", txtEmail.Text);
+                                cmd.Parameters.AddWithValue("@nome", txtNome.Text);
+                                cmd.Parameters.AddWithValue("@telefone", txtTele.Text);
+                                cmd.Parameters.AddWithValue("@idestado", ddlEstado.SelectedValue);
+                                cmd.Parameters.AddWithValue("@senha", txtSenha.Text);
+                                cmd.Parameters.AddWithValue("@conf_senha", txtConfSenha.Text);
+                                cmd.Parameters.AddWithValue("@concorda", ckbConcorda.Checked);
+
+                                cmd.ExecuteNonQuery();
+                                lblMensagem.Text = " Registro incluido com sucesso";
+                            }
+                            conn.Close();
+
+                            conn.Dispose();
+
                         }
-
-                        else
-                        {
-                            dr.Close();
-                            cmd.Parameters.Clear();
-                            cmd.CommandText = "insert into Usuario(email,nome,telefone,idestado,senha,conf_senha,concorda) values (@email, @nome, @telefone, @idestado, @senha,@conf_senha,@concorda)";
-
-                            cmd.Parameters.AddWithValue("@email", txtEmail.Text);
-                            cmd.Parameters.AddWithValue("@nome", txtNome.Text);
-                            cmd.Parameters.AddWithValue("@telefone", txtTele.Text);
-                            cmd.Parameters.AddWithValue("@idestado", ddlEstado.SelectedValue);
-                            cmd.Parameters.AddWithValue("@senha", txtSenha.Text);
-                            cmd.Parameters.AddWithValue("@conf_senha", txtConfSenha.Text);
-                            cmd.Parameters.AddWithValue("@concorda", ckbConcorda.Checked);
-
-                            cmd.ExecuteNonQuery();
-                            lblMensagem.Text = " Registro incluido com sucesso";
-                        }
-                        conn.Close();
-
-                        conn.Dispose();
-
                     }
                 }
             }
